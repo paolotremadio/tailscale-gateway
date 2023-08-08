@@ -1,0 +1,15 @@
+---
+version: "3"
+services:
+  main:
+    image: ghcr.io/paolotremadio/tailscale-gateway:latest
+    container_name: tailscale-gateway
+    volumes:
+      - $PWD:/home/node/app-config:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - TZ=Europe/London
+    ports:
+      - 80:9000
+    restart: always
