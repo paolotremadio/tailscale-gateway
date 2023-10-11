@@ -1,38 +1,76 @@
-const express = require('express');
-const vhost = require('express-vhost');
-const httpProxy = require('http-proxy');
+const axios = require('axios');
 
 const config = require('./config');
 const cloudflare = require('./cloudflare')(config.cloudflare);
+const caddyFile = require('./caddyfile.json');
 
-const server = express();
-server.disable('x-powered-by');
-
-const proxyTo = (uri) => {
-  const proxy = httpProxy.createProxyServer({ target: uri, ws: true });
-  return (req, res) => {
-    // console.log("proxying GET request", req.url);
-    proxy.web(req, res, {});
-  };
-};
+const vhosts = [];
 
 (async () => {
   await Promise.all(Object.entries(config.services).map(async ([host, details]) => {
     const destination = details.uri;
-    vhost.register(host, proxyTo(destination));
+    vhosts.push({
+      "match": [
+        {
+          "host": [
+            host
+          ]
+        }
+      ],
+      "handle": [
+        {
+          "handler": "reverse_proxy",
+          "upstreams": [
+            {
+              "dial": details.uri.replace('http://', ''),
+            }
+          ]
+        }
+      ]
+    })
 
     let dnsStatus;
     try {
       await cloudflare.declareService(host, details.destinationServer);
       dnsStatus = `✅️ DNS record updated`;
-    } catch (e) {
+    }
+    catch (e) {
       dnsStatus = `⛔️ DNS record not updated: ${e}`;
     }
 
     console.log(`➡️ Proxying "${host}" to ${destination} (${dnsStatus})`);
   }));
 
-  server.use(vhost.vhost(server.enabled('trust proxy')));
 
-  server.listen(9000, '0.0.0.0', () => console.log('🚀 Server started'));
+  vhosts.push({
+    "match": [
+      {
+        "host": [
+          "*"
+        ]
+      }
+    ],
+    "handle": [
+      {
+        "handler": "static_response",
+        "status_code": "200",
+        "body": "CADDY: host not configured yet"
+      }
+    ]
+  });
+
+  // Attach host to default config
+  caddyFile.apps.http.servers['tailscale-proxy-server'].routes = vhosts;
+
+  try {
+    await axios.post('http://caddy:2019/load', caddyFile);
+    console.log(`✅️ Caddy config updated`);
+  } catch (e) {
+    console.log(`⛔️ Failure in updated Caddy config: ${e}`);
+  }
+
+  console.log('🚀 Server started');
+
+  // Keep container running
+  setInterval(() => true, 10000);
 })();

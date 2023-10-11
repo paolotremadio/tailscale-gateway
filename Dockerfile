@@ -10,4 +10,4 @@ WORKDIR /home/node/app-config
 
 EXPOSE 9000
 
-ENTRYPOINT node /home/node/app/src/index.js
+CMD yarn prod

@@ -10,6 +10,20 @@ services:
       - "host.docker.internal:host-gateway"
     environment:
       - TZ=Europe/London
+    restart: always
+    depends_on:
+      - caddy
+  caddy:
+    image: caddy:alpine
+    container_name: tailscale-gateway-caddy
+    volumes:
+      - $PWD:/config:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - TZ=Europe/London
+      - CADDY_ADMIN=0.0.0.0:2019
     ports:
-      - 80:9000
+      - 80:80
+    #      - 2019:2019
     restart: always

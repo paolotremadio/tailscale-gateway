@@ -1,0 +1,28 @@
+{
+  "logging": {
+    "logs": {
+      "default": {
+        "level": "INFO",
+        "writer": {
+          "output": "stdout"
+        }
+      }
+    }
+  },
+  "apps": {
+    "http": {
+      "servers": {
+        "tailscale-proxy-server": {
+          "listen": [
+            ":80"
+          ],
+          "automatic_https": {
+            "disable": true
+          },
+          "routes": [
+          ]
+        }
+      }
+    }
+  }
+}
