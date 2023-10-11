@@ -10,4 +10,5 @@ WORKDIR /home/node/app-config
 
 EXPOSE 9000
 
-CMD yarn prod
+# Note: we can't use yarn
+CMD node /home/node/app/src/index.js
