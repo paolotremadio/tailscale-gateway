@@ -31,7 +31,7 @@ const vhosts = [];
 
     let dnsStatus;
     try {
-      await cloudflare.declareService(host, details.destinationServer);
+      await cloudflare.declareService(host);
       dnsStatus = `✅️ DNS record updated`;
     }
     catch (e) {

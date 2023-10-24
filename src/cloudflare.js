@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 module.exports = (config) => {
-  const { apiKey, zoneId, baseDomain } = config;
+  const { apiKey, zoneId, baseDomain, node } = config;
 
   const client = axios.create({
     baseURL: 'https://api.cloudflare.com/client/v4/',
@@ -12,10 +12,10 @@ module.exports = (config) => {
   });
 
   return {
-    declareService: async (serviceName, destinationServer) => {
+    declareService: async (serviceName) => {
       const { data: { result: records } } = await client.get(`zones/${zoneId}/dns_records`);
 
-      const recordName = `${serviceName}.${baseDomain}`;
+      const recordName = `${serviceName}.service.${baseDomain}`;
 
       // Check if record exists
       let recordId;
@@ -28,7 +28,7 @@ module.exports = (config) => {
 
       // Update record
       const payload = {
-        content: destinationServer,
+        content: `${node}.node.${baseDomain}`,
         name: recordName,
         proxied: false,
         type: 'CNAME',
